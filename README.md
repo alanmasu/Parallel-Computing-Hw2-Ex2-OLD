@@ -1,0 +1,1 @@
+# Introduction to parallel computing - Homework 2 - Exercise 2
