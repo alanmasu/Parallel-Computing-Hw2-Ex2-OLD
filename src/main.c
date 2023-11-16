@@ -38,6 +38,15 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#ifndef COMPILATION_NOTES
+    #define COMPILATION_NOTES ""
+#endif
+
 double randomD(int min, int max, int prec){ 
   prec = 10 * prec; 
   return (rand() % (max * prec - min * prec + 1) + min * prec) / (double)prec; 
@@ -74,49 +83,74 @@ uint64_t matBlockT(double *A, double *B, int n, int bs){
   return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
 }
 int main(int argc, char const *argv[]){
+  char hostbuffer[256] = "";
+  int hostname;
   int n, bs;
-#ifndef N
-  do{
-    printf("Insert the size of the matrix: ");
-    scanf("%d", &n);
-  }while(n != 0);
-#else
-  n = N;
+
+  //Retriving some info about the machine
+  // retrieve hostname
+  hostname = gethostname(hostbuffer, sizeof(hostbuffer));
+  if (hostname == -1) {
+    printf("Error when getting hostname\n");
+  }
+
+  FILE *matTFile;
+  FILE *matBlockTFile;
+  matTFile = fopen("./results/matTFile.csv", "a");
+  matBlockTFile = fopen("./results/matBlockTFile.csv", "a");
+  if(matTFile == NULL){
+    printf("Creating 'matT' results file....\n");
+    matTFile = fopen("./results/matTFile.csv", "w");
+    if(matTFile == NULL){
+      printf("Error opening matTFile.csv\n");
+    } else{
+      fprintf(matTFile, "matrix_size,matT_wallTime[us],matTpar_wallTime[us],hostname,compilation_notes\n");
+    }
+  }
+  if(matBlockTFile == NULL){
+    printf("Creating 'matBlockT' results file....\n");
+    matBlockTFile = fopen("./results/matBlockTFile.csv", "w");
+    if(matBlockTFile == NULL){
+      printf("Error opening matBlockTFile.csv\n");
+    } else{
+      fprintf(matBlockTFile,"matrix_size, blockSize,matBlockT_wallTime[us],matBlockTpar_wallTime[us],hostname,compilation_notes\n");
+    }
+  }
+
+  for (n = 16; n <= 4096; n *= 2){
+    double *A  = (double *)malloc(n*n*sizeof(double));
+    double *At = (double *)malloc(n*n*sizeof(double));
+
+    for(int i = 0; i < n*n; i++){
+      A[i] = randomD(0, 100, 4);
+    }
+
+#ifdef DEBUG
+    //Print matrix
+    printf("Matrix A:\n");
+    for(int i = 0; i < n*n; i++){
+      printf("%f\t", A[i]);
+      if((i+1)%n == 0)
+        printf("\n");
+    }
 #endif
-
-#ifndef BS
-  do{
-    printf("Insert the block size: ");
-    scanf("%d", &bs);
-  }while(bs != 0);
-#else
-  bs = BS;
+    uint64_t t = matT(A, At, n);
+    printf("Dim: %d, Wall Time: %ld us\n", n, t);
+    if(matTFile != NULL){
+      fprintf(matTFile, "%d,%ld,%ld,%s,%s\n", n, t, 0, hostbuffer, COMPILATION_NOTES);
+    }
+#ifdef DEBUG
+    printf("Matrix A trasnposed:\n");
+    for(int i = 0; i < n*n; i++){
+      printf("%f\t", At[i]);
+      if((i+1)%n == 0)
+        printf("\n");
+    }
 #endif
-
-  double *A  = (double *)malloc(n*n*sizeof(double));
-  double *At = (double *)malloc(n*n*sizeof(double));
-
-  for(int i = 0; i < n*n; i++){
-    A[i] = randomD(0, 100, 4);
+    free(A);
+    free(At);
   }
-
-  //Print matrix
-  printf("Matrix A:\n");
-  for(int i = 0; i < n*n; i++){
-    printf("%f\t", A[i]);
-    if((i+1)%n == 0)
-      printf("\n");
-  }
-
-  uint64_t t = matT(A, At, n);
-  printf("Time for serial transpose: %ld us\n", t);
-
-  printf("Matrix A trasnposed:\n");
-  for(int i = 0; i < n*n; i++){
-    printf("%f\t", At[i]);
-    if((i+1)%n == 0)
-      printf("\n");
-  }
-
+  if(matTFile != NULL)      fclose(matTFile);
+  if(matBlockTFile != NULL) fclose(matBlockTFile);
   return 0;
 }
