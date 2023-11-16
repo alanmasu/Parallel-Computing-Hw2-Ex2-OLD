@@ -44,23 +44,23 @@ double randomD(int min, int max, int prec){
 }
 
 uint64_t matT (double *A, double *B, int n){
-  int i, j;
+  int r, c;
   struct timespec start, end;
   
-  clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-  for (i = 0; i < n; i++){
-    for (j = 0; j < n; j++){
-      B[j*n+i] = A[i*n+j];
+  clock_gettime(CLOCK_MONOTONIC, &start);
+  for (r = 0; r < n; r++){
+    for (c = 0; c < n; c++){
+      B[c*n+r] = A[r*n+c];
     }
   }
-  clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+  clock_gettime(CLOCK_MONOTONIC, &end);
   return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
 }
 
 uint64_t matBlockT(double *A, double *B, int n, int bs){
   struct timespec start, end;
   int r, c, br, bc;
-  clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+  clock_gettime(CLOCK_MONOTONIC, &start);
   for (r = 0; r < n; r += bs){
     for (c = 0; c < n; c += bs){
       for (br = r; br < r+bs; br++){
@@ -70,7 +70,7 @@ uint64_t matBlockT(double *A, double *B, int n, int bs){
       }
     }
   }
-  clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+  clock_gettime(CLOCK_MONOTONIC, &end);
   return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
 }
 int main(int argc, char const *argv[]){
@@ -79,7 +79,7 @@ int main(int argc, char const *argv[]){
   do{
     printf("Insert the size of the matrix: ");
     scanf("%d", &n);
-  }while(n < 0);
+  }while(n != 0);
 #else
   n = N;
 #endif
@@ -88,7 +88,7 @@ int main(int argc, char const *argv[]){
   do{
     printf("Insert the block size: ");
     scanf("%d", &bs);
-  }while(bs < 0);
+  }while(bs != 0);
 #else
   bs = BS;
 #endif
