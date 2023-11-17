@@ -43,7 +43,7 @@ double randomD(int min, int max, int prec){
   return (rand() % (max * prec - min * prec + 1) + min * prec) / (double)prec; 
 }
 
-uint64_t matT (double *A, double *B, int n){
+uint64_t matT (const double *A, double *B, int n){
   int r, c;
   struct timespec start, end;
   
@@ -57,15 +57,25 @@ uint64_t matT (double *A, double *B, int n){
   return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
 }
 
-uint64_t matBlockT(double *A, double *B, int n, int bs){
+uint64_t matBlockT(const double *A, double *B, int n, int bs){
   struct timespec start, end;
-  int r, c, br, bc;
+  int r, c;       //Row and column inside the block
+  int br, bc;     //Row and column of the block
+  int rA, cA;     //Row and column of the element in A
+  int rB, cB;     //Row and column of the element in B
+  int N_B = n/bs; //Number of blocks
+
   clock_gettime(CLOCK_MONOTONIC, &start);
-  for (r = 0; r < n; r += bs){
-    for (c = 0; c < n; c += bs){
-      for (br = r; br < r+bs; br++){
-        for (bc = c; bc < c+bs; bc++){
-          B[bc*n+br] = A[br*n+bc];
+  //Block transpose: transpose each block internally
+  for (br = 0; br < N_B; ++br){
+    for(bc = 0; bc < N_B; ++bc){
+      for(r = 0; r < bs; ++r){
+        for(c = 0; c < bs; ++c){  
+          rA = br*bs + r;
+          cA = bc*bs + c;
+          rB = bc*bs + c;
+          cB = br*bs + r;
+          B[rB*n+cB] = A[rA*n+cA];
         }
       }
     }
@@ -73,13 +83,14 @@ uint64_t matBlockT(double *A, double *B, int n, int bs){
   clock_gettime(CLOCK_MONOTONIC, &end);
   return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
 }
+
 int main(int argc, char const *argv[]){
   int n, bs;
 #ifndef N
   do{
     printf("Insert the size of the matrix: ");
     scanf("%d", &n);
-  }while(n != 0);
+  }while(n == 0);
 #else
   n = N;
 #endif
@@ -88,35 +99,56 @@ int main(int argc, char const *argv[]){
   do{
     printf("Insert the block size: ");
     scanf("%d", &bs);
-  }while(bs != 0);
+  }while(bs == 0);
 #else
   bs = BS;
 #endif
 
-  double *A  = (double *)malloc(n*n*sizeof(double));
-  double *At = (double *)malloc(n*n*sizeof(double));
+  double *A   = (double *)malloc(n*n*sizeof(double));
+  double *At  = (double *)malloc(n*n*sizeof(double));
+  double *AtB = (double *)malloc(n*n*sizeof(double));
 
   for(int i = 0; i < n*n; i++){
-    A[i] = randomD(0, 100, 4);
+    A[i] = i; //randomD(0, 100, 4);
   }
 
-  //Print matrix
+  //Print matrix A
+#ifdef DEBUG
   printf("Matrix A:\n");
   for(int i = 0; i < n*n; i++){
     printf("%f\t", A[i]);
     if((i+1)%n == 0)
       printf("\n");
   }
+#endif
 
   uint64_t t = matT(A, At, n);
+  uint64_t tB = matBlockT(A, AtB, n, bs);
   printf("Time for serial transpose: %ld us\n", t);
-
+#ifdef DEBUG
   printf("Matrix A trasnposed:\n");
   for(int i = 0; i < n*n; i++){
-    printf("%f\t", At[i]);
+    printf("%f\t", At[i]); 
     if((i+1)%n == 0)
       printf("\n");
   }
+  printf("Matrix A trasnposed by blocks:\n");
+  for(int i = 0; i < n*n; i++){
+    printf("%f\t", AtB[i]); 
+    if((i+1)%n == 0)
+      printf("\n");
+  }
+
+  for(int i = 0; i < n*n; i++){
+    if(At[i] != AtB[i]){
+      printf("Error in the block transpose\n");
+      return -1;
+    }
+  }
+#endif
+  free(A);
+  free(At);
+  free(AtB);
 
   return 0;
 }
