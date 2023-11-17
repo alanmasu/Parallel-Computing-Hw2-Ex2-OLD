@@ -5,7 +5,7 @@
     Assignment 2 - Exercise 2:
       This exercise consists of creating a program for parallel matrix transposition using OpenMP. The
       program must efficiently handle matrices of real numbers. The tasks to be performed are:
-      - T1: Serial matrix transposition:
+      - T1: Serial matrix transposition: [DONE]
             Implement a serial matrix transpose algorithm for matrices of real numbers. Define a function
             matT that takes an input matrix A and returns its transpose. Define a second function matBlockT
             that takes an input matrix A and returns its transpose, calculating the transpose in blocks as

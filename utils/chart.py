@@ -18,8 +18,8 @@ sns.set_style("whitegrid")
 df = pd.read_csv(filename + '.csv')
 df_block = pd.read_csv(filename_block + '.csv')
 # df['wall_clock_time_routine2'].replace(to_replace=0, value=0.0000001, inplace=True)
-print(df)
-print(df_block)
+# print(df)
+# print(df_block)
 
 # Filter the data
 df_serial = df[df['compilation_notes'] == 'SERIAL_CODE']
@@ -28,8 +28,8 @@ df_serial_block = df_block[df_block['compilation_notes'] == 'SERIAL_CODE']
 # #df_ftree = df[df['notes'] == 'ftree'][df['node'] == 'hpc-c11-node23.unitn.it']
 
 
-print('df_serial',df_serial)
-print('df_serial_block',df_serial_block)
+# print('df_serial',df_serial)
+# print('df_serial_block',df_serial_block)
 # print('df_avx',df_avx)
 # #print(df_ftree)
 
@@ -44,7 +44,7 @@ sns.lineplot(x='matrix_size', y='matT_wallTime[us]', data=df_serial, label='Seri
 plt.title('Wall time')
 plt.xlabel('Size')
 # plt.ylabel('Time [s]')
-plt.ylabel('$log_2(t) [s]$')
+plt.ylabel('$log_2(t) [us]$')
 plt.xscale('log')
 # plt.yscale('log')
 
@@ -67,12 +67,12 @@ plt.savefig(img_filename + '-log.png')
 plt.clf()
 
 # # Create a scatter plot
-sns.lineplot(x='matrix_size', y='matBlockT_wallTime[us]', data=df_serial_block, hue='blockSize')
+sns.lineplot(x='matrix_size', y='matBlockT_wallTime[us]', data=df_serial_block, hue=df_serial_block['blockSize'].astype(str), palette='colorblind', legend='full')
 
 # # Add title and axis names
 plt.title('Wall time')
 plt.xlabel('Size')
-plt.ylabel('$log_2(t) [s]$')
+plt.ylabel('$log_2(t) [us]$')
 plt.xscale('log')
 
 # # Add tiks to x axis
@@ -87,3 +87,5 @@ plt.xticks(ticks, ticks_labels)
 plt.legend()
 plt.savefig(img_filename_block + '.png')
 plt.show()
+plt.yscale('log')
+plt.savefig(img_filename_block + '-log.png')
