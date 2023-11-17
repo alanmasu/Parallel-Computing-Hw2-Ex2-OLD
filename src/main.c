@@ -131,6 +131,7 @@ int main(int argc, char const *argv[]){
   for (n = 16; n <= 4096; n *= 2){
     double *A   = (double *)malloc(n*n*sizeof(double));
     double *At  = (double *)malloc(n*n*sizeof(double));
+    double *AtB = (double *)malloc(n*n*sizeof(double));
 
     for(int i = 0; i < n*n; i++){
       A[i] = randomD(0, 100, 4);
@@ -150,6 +151,13 @@ int main(int argc, char const *argv[]){
     if(matTFile != NULL){
       fprintf(matTFile, "%d,%ld,%ld,%s,%s\n", n, t, 0, hostbuffer, COMPILATION_NOTES);
     }
+    for(bs = 4; bs <= n/2; bs*=2){
+      t = matBlockT(A, AtB, n, bs);
+      printf("\tBlock Size: %d, Block transopose Wall Time: %ld us\n", bs, t);
+      if(matBlockTFile != NULL){
+        fprintf(matBlockTFile, "%d,%d,%ld,%ld,%s,%s\n", n, bs, t, 0, hostbuffer, COMPILATION_NOTES);
+      }
+    }
 #ifdef DEBUG
     printf("Matrix A trasnposed:\n");
     for(int i = 0; i < n*n; i++){
@@ -158,10 +166,11 @@ int main(int argc, char const *argv[]){
         printf("\n");
     }
 #endif
-    free(A);
-    free(At);
+    if (A   != NULL) free(A);
+    if (At  != NULL) free(At);
+    if (AtB != NULL) free(AtB);
   }
-  if(matTFile != NULL)      fclose(matTFile);
+  if(matTFile      != NULL) fclose(matTFile);
   if(matBlockTFile != NULL) fclose(matBlockTFile);
   return 0;
 }
