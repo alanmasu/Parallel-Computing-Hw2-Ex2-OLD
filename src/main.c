@@ -51,32 +51,6 @@
     #define COMPILATION_NOTES ""
 #endif
 
-///////////// PARALLEL VERSIONS ///////////////
-uint64_t matTpar(const double* A, double* __restrict B, int n){
-  int r, c;
-
-#ifndef _OPENMP
-  struct timespec start, end;
-  clock_gettime(CLOCK_MONOTONIC, &start);
-  for (r = 0; r < n; r++){
-    for (c = 0; c < n; c++){
-      B[c*n+r] = A[r*n+c];
-    }
-  }
-  clock_gettime(CLOCK_MONOTONIC, &end);
-  return ((end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000);
-#else
-  double start = omp_get_wtime();
-  #pragma omp parallel for
-  for (r = 0; r < n; r++){
-    for (c = 0; c < n; c++){
-      B[c*n+r] = A[r*n+c];
-    }
-  }
-  return (omp_get_wtime() - start) * 1000000;
-#endif
-}
-
 int main(int argc, char const *argv[]){
   char hostbuffer[256] = "";
   int hostname;
