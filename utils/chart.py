@@ -72,7 +72,7 @@ sns.lineplot(x='matrix_size', y='matBlockT_wallTime[us]', data=df_serial_block, 
 # # Add title and axis names
 plt.title('Wall time')
 plt.xlabel('Size')
-plt.ylabel('$log_2(t) [us]$')
+plt.ylabel('$t [us]$')
 plt.xscale('log')
 
 # # Add tiks to x axis
@@ -85,7 +85,12 @@ for i in range(4, 12):
     
 plt.xticks(ticks, ticks_labels)
 plt.legend()
+# # Save the plot
 plt.savefig(img_filename_block + '.png')
 plt.show()
+
+# # Change the y axis scale to log and save the plot
 plt.yscale('log')
+plt.ylabel('$log_2(t) [us]$')
+
 plt.savefig(img_filename_block + '-log.png')

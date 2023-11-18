@@ -43,55 +43,11 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include "ex2.h"
+
 #ifndef COMPILATION_NOTES
     #define COMPILATION_NOTES ""
 #endif
-
-double randomD(int min, int max, int prec){ 
-  prec = 10 * prec; 
-  return (rand() % (max * prec - min * prec + 1) + min * prec) / (double)prec; 
-}
-
-uint64_t matT (const double *A, double *B, int n){
-  int r, c;
-  struct timespec start, end;
-  
-  clock_gettime(CLOCK_MONOTONIC, &start);
-  for (r = 0; r < n; r++){
-    for (c = 0; c < n; c++){
-      B[c*n+r] = A[r*n+c];
-    }
-  }
-  clock_gettime(CLOCK_MONOTONIC, &end);
-  return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-}
-
-uint64_t matBlockT(const double *A, double *B, int n, int bs){
-  struct timespec start, end;
-  int r, c;       //Row and column inside the block
-  int br, bc;     //Row and column of the block
-  int rA, cA;     //Row and column of the element in A
-  int rB, cB;     //Row and column of the element in B
-  int N_B = n/bs; //Number of blocks
-
-  clock_gettime(CLOCK_MONOTONIC, &start);
-  //Block transpose: transpose each block internally
-  for (br = 0; br < N_B; ++br){
-    for(bc = 0; bc < N_B; ++bc){
-      for(r = 0; r < bs; ++r){
-        for(c = 0; c < bs; ++c){  
-          rA = br*bs + r;
-          cA = bc*bs + c;
-          rB = bc*bs + c;
-          cB = br*bs + r;
-          B[rB*n+cB] = A[rA*n+cA];
-        }
-      }
-    }
-  }
-  clock_gettime(CLOCK_MONOTONIC, &end);
-  return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-}
 
 int main(int argc, char const *argv[]){
   char hostbuffer[256] = "";
@@ -107,8 +63,8 @@ int main(int argc, char const *argv[]){
 
   FILE *matTFile;
   FILE *matBlockTFile;
-  matTFile = fopen("./results/matTFile.csv", "a");
-  matBlockTFile = fopen("./results/matBlockTFile.csv", "a");
+  matTFile = fopen("./results/matTFile.csv", "r");
+  matBlockTFile = fopen("./results/matBlockTFile.csv", "r");
   if(matTFile == NULL){
     printf("Creating 'matT' results file....\n");
     matTFile = fopen("./results/matTFile.csv", "w");
@@ -117,15 +73,22 @@ int main(int argc, char const *argv[]){
     } else{
       fprintf(matTFile, "matrix_size,matT_wallTime[us],matTpar_wallTime[us],hostname,compilation_notes\n");
     }
+  }else{
+    fclose(matTFile);
+    matTFile = fopen("./results/matTFile.csv", "a");
   }
+
   if(matBlockTFile == NULL){
     printf("Creating 'matBlockT' results file....\n");
     matBlockTFile = fopen("./results/matBlockTFile.csv", "w");
     if(matBlockTFile == NULL){
       printf("Error opening matBlockTFile.csv\n");
     } else{
-      fprintf(matBlockTFile,"matrix_size, blockSize,matBlockT_wallTime[us],matBlockTpar_wallTime[us],hostname,compilation_notes\n");
+      fprintf(matBlockTFile,"matrix_size,blockSize,matBlockT_wallTime[us],matBlockTpar_wallTime[us],hostname,compilation_notes\n");
     }
+  }else{
+    fclose(matBlockTFile);
+    matBlockTFile = fopen("./results/matBlockTFile.csv", "a");
   }
 
   for (n = 16; n <= 4096; n *= 2){
