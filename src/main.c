@@ -38,6 +38,8 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+#include <omp.h>
+
 double randomD(int min, int max, int prec){ 
   prec = 10 * prec; 
   return (rand() % (max * prec - min * prec + 1) + min * prec) / (double)prec; 
@@ -84,6 +86,32 @@ uint64_t matBlockT(const double *A, double *B, int n, int bs){
   return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
 }
 
+///////////// PARALLEL VERSIONS ///////////////
+uint64_t matTpar(const double* A, double* __restrict B, int n){
+  int r, c;
+
+#ifndef _OPENMP
+  struct timespec start, end;
+  clock_gettime(CLOCK_MONOTONIC, &start);
+  for (r = 0; r < n; r++){
+    for (c = 0; c < n; c++){
+      B[c*n+r] = A[r*n+c];
+    }
+  }
+  clock_gettime(CLOCK_MONOTONIC, &end);
+  return ((end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000);
+#else
+  double start = omp_get_wtime();
+  #pragma omp parallel for
+  for (r = 0; r < n; r++){
+    for (c = 0; c < n; c++){
+      B[c*n+r] = A[r*n+c];
+    }
+  }
+  return (omp_get_wtime() - start) * 1000000;
+#endif
+}
+
 int main(int argc, char const *argv[]){
   int n, bs;
 #ifndef N
@@ -106,7 +134,11 @@ int main(int argc, char const *argv[]){
 
   double *A   = (double *)malloc(n*n*sizeof(double));
   double *At  = (double *)malloc(n*n*sizeof(double));
-  double *AtB = (double *)malloc(n*n*sizeof(double));
+  double *AtP = (double *)malloc(n*n*sizeof(double));
+  if(A == NULL || At == NULL || AtP == NULL){
+    printf("Error in memory allocation\n");
+    return -1;
+  }
 
   for(int i = 0; i < n*n; i++){
     A[i] = i; //randomD(0, 100, 4);
@@ -123,8 +155,8 @@ int main(int argc, char const *argv[]){
 #endif
 
   uint64_t t = matT(A, At, n);
-  uint64_t tB = matBlockT(A, AtB, n, bs);
-  printf("Time for serial transpose: %ld us\n", t);
+  uint64_t tP = matTpar(A, AtP, n);
+  printf("Time for serial transpose: \t%ld us, \nTime for parallel transpose: \t%ld us\n", t, tP);
 #ifdef DEBUG
   printf("Matrix A trasnposed:\n");
   for(int i = 0; i < n*n; i++){
@@ -132,23 +164,23 @@ int main(int argc, char const *argv[]){
     if((i+1)%n == 0)
       printf("\n");
   }
-  printf("Matrix A trasnposed by blocks:\n");
+  printf("Matrix A trasnposed in serial:\n");
   for(int i = 0; i < n*n; i++){
-    printf("%f\t", AtB[i]); 
+    printf("%f\t", AtP[i]); 
     if((i+1)%n == 0)
       printf("\n");
   }
 
   for(int i = 0; i < n*n; i++){
-    if(At[i] != AtB[i]){
-      printf("Error in the block transpose\n");
+    if(At[i] != AtP[i]){
+      printf("Error in the parallel transpose\n");
       return -1;
     }
   }
 #endif
   free(A);
   free(At);
-  free(AtB);
+  free(AtP);
 
   return 0;
 }
