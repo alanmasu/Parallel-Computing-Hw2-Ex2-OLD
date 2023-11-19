@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include <omp.h>
 
 double randomD(int min, int max, int prec){ 
   prec = 10 * prec; 
