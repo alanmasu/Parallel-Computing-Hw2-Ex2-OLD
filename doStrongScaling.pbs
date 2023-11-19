@@ -8,6 +8,8 @@
 #PBS -q short_cpuQ
 #PBS -l walltime=00:05:00
 #PBS -l select=1:ncpus=64
+#email alert
+#PBS -m abe
 #PBS -M alan.masutti@studenti.unitn.it
 
 module load gcc75
@@ -15,6 +17,14 @@ module load gcc75
 
 cd /home/alan.masutti/Homework2/Exercise2
 source env-configuration.sh
+
+if test -f "results/matTFile.csv"; then
+    rm results/matTFile.csv
+fi
+
+if test -f "results/matBlockTFile.csv"; then
+    rm results/matBlockTFile.csv
+fi
 
 if test -f "a.out"; then
     rm a.out

@@ -125,7 +125,7 @@ int main(int argc, char const *argv[]){
   double *B = (double *)malloc(n*n*sizeof(double));
   if(A == NULL || B == NULL){
     printf("Error when allocating memory\n");
-    exit(1);
+    return (-1);
   }
 
   //Execution of the serial transpose
@@ -139,6 +139,7 @@ int main(int argc, char const *argv[]){
 #ifdef PRINT
   printf("Doing serial block transpose\n");
 #endif
+  populateMatrix(A, n, 1);
   uint64_t timeBlock = matBlockT(A, B, n, bs);
 #ifdef PRINT
   printf("Serial block transpose done. Wall Time: \t%ld us\n", timeBlock);
@@ -148,6 +149,7 @@ int main(int argc, char const *argv[]){
 #ifdef PRINT
   printf("Doing parallel transpose\n");
 #endif
+  populateMatrix(A, n, 1);
   uint32_t timePar = matTpar(A, B, n);
 #ifdef PRINT
   printf("Parallel transpose done. Wall Time: \t%ld us\n", timePar);
