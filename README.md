@@ -14,10 +14,19 @@ So I have created some script that allow us to compile and run the code. The imp
 - `doStrongScaling.sh`: compile the code with GCC and make a strong scaling test. As the previus script, it needs `env-configurations.sh` to be executed before for the same reasons.
 - `pythonStrongScaling.sh`: this script only use the python virtual environment to make the plots of the strong scaling test. It needs `env-configurations.sh` but will not execute the main program.
 - `pythonCharts.sh`: this script only use the python virtual environment to make the plot of the WallTime over the matrix size. It needs `env-configurations.sh` but will not execute the main program.
+- `doWeakScaling.sh`: compile the code with GCC and make a weak scaling test. Exetute also the graph creation.
+- `pythonWeakScaling.sh`: this script only use the python virtual environment to make the plots of the weak scaling test. It needs `env-configurations.sh` but will not execute the main program.
 
 ## Submitting the job whitout interactive session
+### Strong scaling
 for submitting the job on the cluster we must use the following command:
 ```bash
 qsub doStrongScaling.pbs
 ```
 This command will submit the job on the cluster and will menage all the things are needed for doing the entire scaling test. The results will be saved in the `results` folder in CSV format and save the plot as matTImg-strongScaling.png 
+### Weak scaling
+for submitting the job on the cluster we must use the following command:
+```bash
+qsub doWeakScaling.pbs
+```
+This command will submit the job on the cluster and will menage all the things are needed for doing the entire scaling test. The results will be saved in the `results` folder in CSV format and save the plot as matTImg-weakScaling.png
