@@ -42,7 +42,8 @@ print('df_strong',df_strong)
 
 ########### Normal Transpose ###########
 # # Create a scatter plot
-sns.lineplot(x=df_strong['cores'].astype(str), y='matTpar_wallTime[us]', data=df_strong, color='red')
+sns.lineplot(x=df_strong['cores'].astype(str), y='matT_wallTime[us]', data=df_strong, color='red', label='Serial')
+sns.lineplot(x=df_strong['cores'].astype(str), y='matTpar_wallTime[us]', data=df_strong, color='blue', label='Parallel')
 
 # # # Add title and axis names
 plt.title('Strong scaling')
