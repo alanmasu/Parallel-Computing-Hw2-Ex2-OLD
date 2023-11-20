@@ -4,6 +4,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+infoFile = open('./results/infoFile.csv', 'r')
+info = infoFile.readline()
+infoarr = info.split(',')
+
 filename = './results/matTFile'
 img_filename = './results/matTImg'
 
@@ -29,7 +33,7 @@ def filter(row):
         return 0
     return cores[1]
     
-df_strong = df[(df['compilation_notes'].str.contains('WEAK_SCALING') == True)]
+df_strong = df[(df['compilation_notes'].str.contains('WEAK_SCALING') == True) & (df['run_notes']==infoarr[1])]
 df_strong['cores'] = df_strong.apply(lambda row: filter(row), axis=1)
 
 print('df_strong',df_strong)
@@ -61,11 +65,9 @@ for i in range(0, 7):
     ticks.append(i+1)
     ticks_labels.append(str(2**i))
 
-
-    
 plt.xticks(ticks, ticks_labels)
 # plt.legend()
-plt.savefig(img_filename+ '-weakScaling.png')
+plt.savefig(img_filename+ '-weakScaling-' + infoarr[1] + '.png')
 plt.show()
 
 # plt.yscale('log')

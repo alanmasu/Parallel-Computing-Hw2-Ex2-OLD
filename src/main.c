@@ -53,6 +53,9 @@
     #define COMPILATION_NOTES ""
 #endif
 
+#define RUN_NOTES "omp-for"
+#define RUN_DESCRIPTION "Using #omp parallel for as directive"
+
 int main(int argc, char const *argv[]){
   char hostbuffer[256] = "";
   int hostname;
@@ -65,6 +68,18 @@ int main(int argc, char const *argv[]){
     printf("Error when getting hostname\n");
   }
 
+  //Save running information:
+  FILE *infoFile = fopen("./results/infoFile.csv", "r");
+  if(infoFile == NULL){
+    #ifdef PRINT  
+      printf("Creating infoFile.csv file\n");
+    #endif
+    infoFile = fopen("./results/infoFile.csv", "w");
+    //hostname,run_notes,run_description,compilation_time,compilation_date
+    fprintf(infoFile, "%s,%s,%s,%s,%s\n", hostbuffer, RUN_NOTES, RUN_DESCRIPTION,__TIME__, __DATE__);
+    fclose(infoFile);
+  }    
+
   //opening file to write results
   FILE *matTFile = fopen("./results/matTFile.csv", "r");
   if(matTFile == NULL){
@@ -76,7 +91,7 @@ int main(int argc, char const *argv[]){
       printf("Error when opening matTFile.csv file\n");
       exit(1);
     }
-    fprintf(matTFile, "matrix_size,matT_wallTime[us],matTpar_wallTime[us],hostname,compilation_notes\n");
+    fprintf(matTFile, "matrix_size,matT_wallTime[us],matTpar_wallTime[us],hostname,compilation_notes,run_notes\n");
   }else{
     fclose(matTFile);
     matTFile = fopen("./results/matTFile.csv", "a");
@@ -92,7 +107,7 @@ int main(int argc, char const *argv[]){
       printf("Error when opening matBlockTFile.csv file\n");
       exit(1);
     }
-    fprintf(matBlockTFile, "matrix_size,block_size,matBlockT_wallTime[us],matBlockTpar_wallTime[us],hostname,compilation_notes\n");
+    fprintf(matBlockTFile, "matrix_size,block_size,matBlockT_wallTime[us],matBlockTpar_wallTime[us],hostname,compilation_notes,run_notes\n");
   }else{
     fclose(matBlockTFile);
     matBlockTFile = fopen("./results/matBlockTFile.csv", "a");
@@ -156,8 +171,8 @@ int main(int argc, char const *argv[]){
 #endif
 
   //Exporting results
-  fprintf(matTFile, "%d,%ld,%ld,%s,%s\n", n, time, timePar, hostbuffer, COMPILATION_NOTES);
-  fprintf(matBlockTFile, "%d,%d,%ld,%ld,%s,%s\n", n, bs, timeBlock, 0, hostbuffer, COMPILATION_NOTES);
+  fprintf(matTFile, "%d,%ld,%ld,%s,%s,%s\n", n, time, timePar, hostbuffer, COMPILATION_NOTES, RUN_NOTES);
+  fprintf(matBlockTFile, "%d,%d,%ld,%ld,%s,%s,%s\n", n, bs, timeBlock, 0, hostbuffer, COMPILATION_NOTES, RUN_NOTES);
 
   //Closing results files
   fclose(matTFile);
