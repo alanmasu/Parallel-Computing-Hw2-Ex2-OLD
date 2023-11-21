@@ -74,8 +74,11 @@ uint64_t matTpar(const double* A, double* __restrict B, int n){
   clock_gettime(CLOCK_MONOTONIC, &end);
   return ((end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000);
 #else
+  #ifdef DEBUG
+    printf("Doing TRUE parallel transpose\n");
+  #endif
   double start = omp_get_wtime();
-  #pragma omp parallel for
+  #pragma omp parallel for collapse(2)
   for (r = 0; r < n; r++){
     for (c = 0; c < n; c++){
       B[c*n+r] = A[r*n+c];

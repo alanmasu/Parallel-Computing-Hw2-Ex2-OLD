@@ -6,3 +6,4 @@
 *.e
 *.o
 graphEnv
+__pycache__

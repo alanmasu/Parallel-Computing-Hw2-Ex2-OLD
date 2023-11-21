@@ -53,8 +53,10 @@
     #define COMPILATION_NOTES ""
 #endif
 
-#define RUN_NOTES "omp-for"
-#define RUN_DESCRIPTION "Using #omp parallel for as directive"
+#define RUN_NOTES "for-collapse(2)"
+#ifndef RUN_DESCRIPTION 
+  #define RUN_DESCRIPTION "Using #omp parallel for collapse(2)"
+#endif
 
 int main(int argc, char const *argv[]){
   char hostbuffer[256] = "";
@@ -144,30 +146,74 @@ int main(int argc, char const *argv[]){
   }
 
   //Execution of the serial transpose
-  populateMatrix(A, n, 1);
+  // populateMatrix(A, n, 1);
+  for(int i = 0; i < n*n; i++){
+    A[i] = i;
+  }
+
+#ifdef DEBUG
+  printf("A:\n");
+  for(int i = 0; i < n*n; i++){
+    printf("%f ", A[i]);
+    if((i+1) % n == 0){
+      printf("\n");
+    }
+  }
+#endif
+
   uint64_t time = matT(A, B, n);
 #ifdef PRINT
   printf("Serial transpose done. Wall Time: \t%ld us\n", time); 
+#endif
+
+#ifdef DEBUG
+  printf("A Transpose:\n");
+  for(int i = 0; i < n*n; i++){
+    printf("%f ", A[i]);
+    if((i+1) % n == 0){
+      printf("\n");
+    }
+  }
 #endif
 
   //Execution of the block transpose
 #ifdef PRINT
   printf("Doing serial block transpose\n");
 #endif
-  populateMatrix(A, n, 1);
+  // populateMatrix(A, n, 1);
   uint64_t timeBlock = matBlockT(A, B, n, bs);
 #ifdef PRINT
   printf("Serial block transpose done. Wall Time: \t%ld us\n", timeBlock);
 #endif
 
+// #ifdef DEBUG
+//   printf("A Transpose by blocks:\n");
+//   for(int i = 0; i < n*n; i++){
+//     printf("%f ", A[i]);
+//     if((i+1) % n == 0){
+//       printf("\n");
+//     }
+//   }
+// #endif
+
   //Execution of the parallel transpose
 #ifdef PRINT
   printf("Doing parallel transpose\n");
 #endif
-  populateMatrix(A, n, 1);
+  // populateMatrix(A, n, 1);
   uint32_t timePar = matTpar(A, B, n);
 #ifdef PRINT
   printf("Parallel transpose done. Wall Time: \t%ld us\n", timePar);
+#endif
+
+#ifdef DEBUG
+  printf("A Transpose in parallel:\n");
+  for(int i = 0; i < n*n; i++){
+    printf("%f ", B[i]);
+    if((i+1) % n == 0){
+      printf("\n");
+    }
+  }
 #endif
 
   //Exporting results
