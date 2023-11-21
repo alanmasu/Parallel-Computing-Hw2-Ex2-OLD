@@ -29,6 +29,14 @@ if test -f "results/infoFile.csv"; then
     rm results/matTFile.csv
 fi
 
+if test -f "/results/date.csv"; then
+    rm results/date.csv
+fi
+
+if test -f "/results/infoFile.csv"; then
+    rm results/infoFile.csv
+fi
+
 ##Remove old executables
 if test -f "a.out"; then
     rm a.out

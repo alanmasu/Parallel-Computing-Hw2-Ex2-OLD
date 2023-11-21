@@ -18,13 +18,21 @@ module load gcc75
 cd /home/alan.masutti/Homework2/Exercise2
 source env-configuration.sh
 
-# if test -f "results/matTFile.csv"; then
-#     rm results/matTFile.csv
-# fi
+if test -f "results/matTFile.csv"; then
+    rm results/matTFile.csv
+fi
 
-# if test -f "results/matBlockTFile.csv"; then
-#     rm results/matBlockTFile.csv
-# fi
+if test -f "results/matBlockTFile.csv"; then
+    rm results/matBlockTFile.csv
+fi
+
+if test -f "/results/date.csv"; then
+    rm results/date.csv
+fi
+
+if test -f "/results/infoFile.csv"; then
+    rm results/infoFile.csv
+fi
 
 if test -f "a.out"; then
     rm a.out

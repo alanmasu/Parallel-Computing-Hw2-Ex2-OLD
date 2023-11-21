@@ -6,11 +6,13 @@
 #PBS -e ./H2-Ex2-StrongScaling.e
 # Queue name
 #PBS -q short_cpuQ
-#PBS -l walltime=00:05:00
+#PBS -l walltime=00:25:00
 #PBS -l select=1:ncpus=64
 #email alert
 #PBS -m abe
 #PBS -M alan.masutti@studenti.unitn.it
+
+run_description="Strong Scaling with parallel collapse(2) and 64 cores"
 
 module load gcc75
 
@@ -26,6 +28,14 @@ if test -f "results/matBlockTFile.csv"; then
     rm results/matBlockTFile.csv
 fi
 
+if test -f "/results/date.csv"; then
+    rm results/date.csv
+fi
+
+if test -f "/results/infoFile.csv"; then
+    rm results/infoFile.csv
+fi
+
 if test -f "a.out"; then
     rm a.out
 fi
@@ -34,7 +44,7 @@ for i in {0..4}
 do
     echo "- $i -------------------"
     echo "Serial Code"
-    gcc-7.5.0 ./src/main.c ./src/ex2.c -DCOMPILATION_NOTES="\"STRONG_SCALING;SERIAL_CODE\"" -DN=4096 -DBS=256
+    gcc-7.5.0 ./src/main.c ./src/ex2.c -DCOMPILATION_NOTES="\"STRONG_SCALING;SERIAL_CODE\"" -DN=4096 -DBS=256 -DRUN_DESCRIPTION="\"$run_description\""
     ./a.out
     echo "-------------------"
     echo ""
@@ -42,7 +52,7 @@ do
     do  
         echo "Parallel Code with $i threads"
         echo "-------------------"
-        gcc-7.5.0 ./src/main.c ./src/ex2.c -DCOMPILATION_NOTES="\"STRONG_SCALING;$i\"" -fopenmp -DN=4096 -DBS=256
+        gcc-7.5.0 ./src/main.c ./src/ex2.c -DCOMPILATION_NOTES="\"STRONG_SCALING;$i\"" -fopenmp -DN=4096 -DBS=256 -DRUN_DESCRIPTION="\"$run_description\""
         export OMP_NUM_THREADS=$i
         ./a.out
         echo "-------------------"
