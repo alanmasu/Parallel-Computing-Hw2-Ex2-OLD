@@ -3,6 +3,8 @@ import shutil
 from datetime import datetime
 import os.path
 
+dateFile = (r"./results/dateFile.csv").strip('\n \r') 
+
 def copyFile(src, dest):
     try:
         if(os.path.isfile(dest)):
@@ -19,22 +21,23 @@ def createFolder ():
     date = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
     ##saving the date on a file
-    if not os.path.isfile("./results/date.csv"):
+    if not os.path.isfile(dateFile):
         print("Date file not exist")
-        file = open("./results/date.csv", "w")
+        file = open(dateFile, "w")
         file.write(date)
         file.close()
     else:
-        file = open("./results/date.csv", "r")
+        file = open(dateFile, "r")
         line = file.readline()
         if line == "":
             file.close()
-            file = open("./results/date.csv", "w")
+            file = open(dateFile, "w")
             file.write(date)
             print("Date file empty")
         else:
             date = line.strip('\n \r')
             print("Date restored")
+        
         file.close()
 
     print("Date: " + date)

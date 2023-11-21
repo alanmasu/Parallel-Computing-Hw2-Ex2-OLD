@@ -61,13 +61,13 @@ uint64_t matBlockT(const double *A, double *B, int n, int bs){
 
 ///////////// PARALLEL VERSIONS ///////////////
 uint64_t matTpar(const double* A, double* __restrict B, int n){
-  int r, c;
+  // int r, c;
 
 #ifndef _OPENMP
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
-  for (r = 0; r < n; r++){
-    for (c = 0; c < n; c++){
+  for (int r = 0; r < n; r++){
+    for (int c = 0; c < n; c++){
       B[c*n+r] = A[r*n+c];
     }
   }
@@ -79,8 +79,8 @@ uint64_t matTpar(const double* A, double* __restrict B, int n){
   #endif
   double start = omp_get_wtime();
   #pragma omp parallel for collapse(2)
-  for (r = 0; r < n; r++){
-    for (c = 0; c < n; c++){
+  for (int r = 0; r < n; r++){
+    for (int c = 0; c < n; c++){
       B[c*n+r] = A[r*n+c];
     }
   }

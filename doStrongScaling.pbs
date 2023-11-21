@@ -6,39 +6,26 @@
 #PBS -e ./H2-Ex2-StrongScaling.e
 # Queue name
 #PBS -q short_cpuQ
-#PBS -l walltime=00:25:00
+#PBS -l walltime=00:15:00
 #PBS -l select=1:ncpus=64
 #email alert
 #PBS -m abe
 #PBS -M alan.masutti@studenti.unitn.it
 
-run_description="Strong Scaling with parallel collapse(2) and 64 cores"
-
-module load gcc75
-
-
+##Open directory
 cd /home/alan.masutti/Homework2/Exercise2
+
+##Load modules
+module load gcc75
 source env-configuration.sh
 
-if test -f "results/matTFile.csv"; then
-    rm results/matTFile.csv
-fi
+##Clean results
+source graphEnv/bin/activate
+python3 utils/clearResults.py
+deactivate
 
-if test -f "results/matBlockTFile.csv"; then
-    rm results/matBlockTFile.csv
-fi
+run_description="Strong Scaling with parallel collapse(2) and 64 cores; indexes private"
 
-if test -f "/results/date.csv"; then
-    rm results/date.csv
-fi
-
-if test -f "/results/infoFile.csv"; then
-    rm results/infoFile.csv
-fi
-
-if test -f "a.out"; then
-    rm a.out
-fi
 echo "Doing Strong Scaling"
 for i in {0..4}
 do

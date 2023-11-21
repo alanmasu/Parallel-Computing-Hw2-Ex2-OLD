@@ -11,43 +11,28 @@
 #email alert
 #PBS -m abe
 #PBS -M alan.masutti@studenti.unitn.it
-module load gcc75
 
+##Open directory
 cd /home/alan.masutti/Homework2/Exercise2
+
+##Load modules
+module load gcc75
 source env-configuration.sh
 
-##Remove old results files
-if test -f "results/matTFile.csv"; then
-    rm results/matTFile.csv
-fi
+##Clean results
+source graphEnv/bin/activate
+python3 utils/clearResults.py
+deactivate
 
-if test -f "results/matBlockTFile.csv"; then
-    rm results/matBlockTFile.csv
-fi
-
-if test -f "results/infoFile.csv"; then
-    rm results/matTFile.csv
-fi
-
-if test -f "/results/date.csv"; then
-    rm results/date.csv
-fi
-
-if test -f "/results/infoFile.csv"; then
-    rm results/infoFile.csv
-fi
-
-##Remove old executables
-if test -f "a.out"; then
-    rm a.out
-fi
 echo "Doing Strong Scaling"
+
+run_description="Scaling with parallel collapse(2) and 64 cores & indexes private"
 
 for i in {0..4}
 do
     echo "- $i -------------------"
     echo "Serial Code"
-    gcc-7.5.0 ./src/main.c ./src/ex2.c -DCOMPILATION_NOTES="\"STRONG_SCALING;SERIAL_CODE\"" -DN=4096 -DBS=256
+    gcc-7.5.0 ./src/main.c ./src/ex2.c -DCOMPILATION_NOTES="\"STRONG_SCALING;SERIAL_CODE\"" -DN=4096 -DBS=256 -DRUN_DESCRIPTION="\"$run_description\""
     ./a.out
     echo "-------------------"
     echo ""
@@ -55,7 +40,7 @@ do
     do  
         echo "Parallel Code with $i threads"
         echo "-------------------"
-        gcc-7.5.0 ./src/main.c ./src/ex2.c -DCOMPILATION_NOTES="\"STRONG_SCALING;$i\"" -fopenmp -DN=4096 -DBS=256
+        gcc-7.5.0 ./src/main.c ./src/ex2.c -DCOMPILATION_NOTES="\"STRONG_SCALING;$i\"" -fopenmp -DN=4096 -DBS=256 -DRUN_DESCRIPTION="\"$run_description\""
         export OMP_NUM_THREADS=$i
         ./a.out
         echo "-------------------"
