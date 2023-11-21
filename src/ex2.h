@@ -12,5 +12,6 @@ uint64_t matBlockT(const double *A, double *B, int n, int bs);
 
 ///////////// PARALLEL VERSIONS ///////////////
 uint64_t matTpar(const double* A, double* __restrict B, int n);
+uint64_t matBlockTpar(const double *A, double* __restrict B, int n, int bs);
 
 #endif
