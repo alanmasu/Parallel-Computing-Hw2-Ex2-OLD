@@ -2,4 +2,7 @@
 *.out
 *.exe
 *.png
+*.csv
+*.e
+*.o
 graphEnv

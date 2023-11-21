@@ -5,7 +5,7 @@
     Assignment 2 - Exercise 2:
       This exercise consists of creating a program for parallel matrix transposition using OpenMP. The
       program must efficiently handle matrices of real numbers. The tasks to be performed are:
-      - T1: Serial matrix transposition:
+      - T1: Serial matrix transposition: [DONE]
             Implement a serial matrix transpose algorithm for matrices of real numbers. Define a function
             matT that takes an input matrix A and returns its transpose. Define a second function matBlockT
             that takes an input matrix A and returns its transpose, calculating the transpose in blocks as
@@ -24,7 +24,9 @@
       - T4: Performance analysis:
             Evaluate the performance and scalability of both parallel matrix transpose methods (with blocks
             and without blocks). Calculate the speedup and efficiency gains for different matrix sizes and
-            thread counts. Consider for this task the time of the routine and compute the bandwidth as performance metrics. Identify possible bottlenecks or problems and propose optimizations. Compare the performance of normal transpose and block-based transpose. Discuss
+            thread counts. Consider for this task the time of the routine and compute the bandwidth as performance metrics. 
+            Identify possible bottlenecks or problems and propose optimizations. 
+            Compare the performance of normal transpose and block-based transpose. Discuss
             the differences that may appear in parallelization algorithms when you are working with dense
             or sparse matrices.
 
@@ -38,149 +40,145 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
 #include <omp.h>
 
-double randomD(int min, int max, int prec){ 
-  prec = 10 * prec; 
-  return (rand() % (max * prec - min * prec + 1) + min * prec) / (double)prec; 
-}
+#include "ex2.h"
 
-uint64_t matT (const double *A, double *B, int n){
-  int r, c;
-  struct timespec start, end;
-  
-  clock_gettime(CLOCK_MONOTONIC, &start);
-  for (r = 0; r < n; r++){
-    for (c = 0; c < n; c++){
-      B[c*n+r] = A[r*n+c];
-    }
-  }
-  clock_gettime(CLOCK_MONOTONIC, &end);
-  return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-}
-
-uint64_t matBlockT(const double *A, double *B, int n, int bs){
-  struct timespec start, end;
-  int r, c;       //Row and column inside the block
-  int br, bc;     //Row and column of the block
-  int rA, cA;     //Row and column of the element in A
-  int rB, cB;     //Row and column of the element in B
-  int N_B = n/bs; //Number of blocks
-
-  clock_gettime(CLOCK_MONOTONIC, &start);
-  //Block transpose: transpose each block internally
-  for (br = 0; br < N_B; ++br){
-    for(bc = 0; bc < N_B; ++bc){
-      for(r = 0; r < bs; ++r){
-        for(c = 0; c < bs; ++c){  
-          rA = br*bs + r;
-          cA = bc*bs + c;
-          rB = bc*bs + c;
-          cB = br*bs + r;
-          B[rB*n+cB] = A[rA*n+cA];
-        }
-      }
-    }
-  }
-  clock_gettime(CLOCK_MONOTONIC, &end);
-  return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-}
-
-///////////// PARALLEL VERSIONS ///////////////
-uint64_t matTpar(const double* A, double* __restrict B, int n){
-  int r, c;
-
-#ifndef _OPENMP
-  struct timespec start, end;
-  clock_gettime(CLOCK_MONOTONIC, &start);
-  for (r = 0; r < n; r++){
-    for (c = 0; c < n; c++){
-      B[c*n+r] = A[r*n+c];
-    }
-  }
-  clock_gettime(CLOCK_MONOTONIC, &end);
-  return ((end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000);
-#else
-  double start = omp_get_wtime();
-  #pragma omp parallel for
-  for (r = 0; r < n; r++){
-    for (c = 0; c < n; c++){
-      B[c*n+r] = A[r*n+c];
-    }
-  }
-  return (omp_get_wtime() - start) * 1000000;
+#ifndef COMPILATION_NOTES
+    #define COMPILATION_NOTES ""
 #endif
-}
+
+#define RUN_NOTES "omp-for"
+#define RUN_DESCRIPTION "Using #omp parallel for as directive"
 
 int main(int argc, char const *argv[]){
-  int n, bs;
+  char hostbuffer[256] = "";
+  int hostname;
+  uint32_t n, bs;
+
+  //Retriving some info about the machine
+  // retrieve hostname
+  hostname = gethostname(hostbuffer, sizeof(hostbuffer));
+  if (hostname == -1) {
+    printf("Error when getting hostname\n");
+  }
+
+  //Save running information:
+  FILE *infoFile = fopen("./results/infoFile.csv", "r");
+  if(infoFile == NULL){
+    #ifdef PRINT  
+      printf("Creating infoFile.csv file\n");
+    #endif
+    infoFile = fopen("./results/infoFile.csv", "w");
+    //hostname,run_notes,run_description,compilation_time,compilation_date
+    fprintf(infoFile, "%s,%s,%s,%s,%s\n", hostbuffer, RUN_NOTES, RUN_DESCRIPTION,__TIME__, __DATE__);
+    fclose(infoFile);
+  }    
+
+  //opening file to write results
+  FILE *matTFile = fopen("./results/matTFile.csv", "r");
+  if(matTFile == NULL){
+    #ifdef PRINT  
+      printf("Creating matTFile.csv file\n");
+    #endif
+    matTFile = fopen("./results/matTFile.csv", "w");
+    if(matTFile == NULL){
+      printf("Error when opening matTFile.csv file\n");
+      exit(1);
+    }
+    fprintf(matTFile, "matrix_size,matT_wallTime[us],matTpar_wallTime[us],hostname,compilation_notes,run_notes\n");
+  }else{
+    fclose(matTFile);
+    matTFile = fopen("./results/matTFile.csv", "a");
+  }
+
+  FILE *matBlockTFile = fopen("./results/matBlockTFile.csv", "r");
+  if(matBlockTFile == NULL){
+    #ifdef PRINT  
+      printf("Creating matBlockTFile.csv file\n");
+    #endif
+    matBlockTFile = fopen("./results/matBlockTFile.csv", "w");
+    if(matBlockTFile == NULL){
+      printf("Error when opening matBlockTFile.csv file\n");
+      exit(1);
+    }
+    fprintf(matBlockTFile, "matrix_size,block_size,matBlockT_wallTime[us],matBlockTpar_wallTime[us],hostname,compilation_notes,run_notes\n");
+  }else{
+    fclose(matBlockTFile);
+    matBlockTFile = fopen("./results/matBlockTFile.csv", "a");
+  }
+
+  //getting sizes from command line
 #ifndef N
   do{
-    printf("Insert the size of the matrix: ");
+    printf("Insert matrix size: ");
     scanf("%d", &n);
-  }while(n == 0);
+  }while(n <= 0);
 #else
   n = N;
 #endif
 
 #ifndef BS
   do{
-    printf("Insert the block size: ");
+    printf("Insert block size: ");
     scanf("%d", &bs);
-  }while(bs == 0);
+  }while(n % bs != 0);
 #else
   bs = BS;
 #endif
 
-  double *A   = (double *)malloc(n*n*sizeof(double));
-  double *At  = (double *)malloc(n*n*sizeof(double));
-  double *AtP = (double *)malloc(n*n*sizeof(double));
-  if(A == NULL || At == NULL || AtP == NULL){
-    printf("Error in memory allocation\n");
-    return -1;
+  //Execution of the serial transpose
+#ifdef PRINT
+  printf("Doing serial transpose\n");
+#endif
+  double *A = (double *)malloc(n*n*sizeof(double));
+  double *B = (double *)malloc(n*n*sizeof(double));
+  if(A == NULL || B == NULL){
+    printf("Error when allocating memory\n");
+    return (-1);
   }
 
-  for(int i = 0; i < n*n; i++){
-    A[i] = i; //randomD(0, 100, 4);
-  }
-
-  //Print matrix A
-#ifdef DEBUG
-  printf("Matrix A:\n");
-  for(int i = 0; i < n*n; i++){
-    printf("%f\t", A[i]);
-    if((i+1)%n == 0)
-      printf("\n");
-  }
+  //Execution of the serial transpose
+  populateMatrix(A, n, 1);
+  uint64_t time = matT(A, B, n);
+#ifdef PRINT
+  printf("Serial transpose done. Wall Time: \t%ld us\n", time); 
 #endif
 
-  uint64_t t = matT(A, At, n);
-  uint64_t tP = matTpar(A, AtP, n);
-  printf("Time for serial transpose: \t%ld us, \nTime for parallel transpose: \t%ld us\n", t, tP);
-#ifdef DEBUG
-  printf("Matrix A trasnposed:\n");
-  for(int i = 0; i < n*n; i++){
-    printf("%f\t", At[i]); 
-    if((i+1)%n == 0)
-      printf("\n");
-  }
-  printf("Matrix A trasnposed in serial:\n");
-  for(int i = 0; i < n*n; i++){
-    printf("%f\t", AtP[i]); 
-    if((i+1)%n == 0)
-      printf("\n");
-  }
-
-  for(int i = 0; i < n*n; i++){
-    if(At[i] != AtP[i]){
-      printf("Error in the parallel transpose\n");
-      return -1;
-    }
-  }
+  //Execution of the block transpose
+#ifdef PRINT
+  printf("Doing serial block transpose\n");
 #endif
+  populateMatrix(A, n, 1);
+  uint64_t timeBlock = matBlockT(A, B, n, bs);
+#ifdef PRINT
+  printf("Serial block transpose done. Wall Time: \t%ld us\n", timeBlock);
+#endif
+
+  //Execution of the parallel transpose
+#ifdef PRINT
+  printf("Doing parallel transpose\n");
+#endif
+  populateMatrix(A, n, 1);
+  uint32_t timePar = matTpar(A, B, n);
+#ifdef PRINT
+  printf("Parallel transpose done. Wall Time: \t%ld us\n", timePar);
+#endif
+
+  //Exporting results
+  fprintf(matTFile, "%d,%ld,%ld,%s,%s,%s\n", n, time, timePar, hostbuffer, COMPILATION_NOTES, RUN_NOTES);
+  fprintf(matBlockTFile, "%d,%d,%ld,%ld,%s,%s,%s\n", n, bs, timeBlock, 0, hostbuffer, COMPILATION_NOTES, RUN_NOTES);
+
+  //Closing results files
+  fclose(matTFile);
+  fclose(matBlockTFile);
+
+  //Release memory
   free(A);
-  free(At);
-  free(AtP);
-
-  return 0;
+  free(B);
 }
